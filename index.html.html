@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Empire Engine — 401(k) Rescue Strategy Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --navy:       #0A1628;
+  --navy-mid:   #1C3252;
+  --navy-panel: #142540;
+  --navy-deep:  #0D1E35;
+  --gold:       #D4A017;
+  --gold-glow:  rgba(212,160,23,0.13);
+  --gold-border:rgba(212,160,23,0.35);
+  --cream:      #E8E0CC;
+  --steel:      #C8D8F0;
+  --muted:      #6E8BAD;
+  --divider:    #2A4A7A;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans:  'Inter', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--navy);
+  color: var(--cream);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  padding: 40px 20px 60px;
+}
+
+/* ── PAGE WRAPPER ── */
+.page-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+.page-eyebrow {
+  font-size: 11px; font-weight: 600; color: var(--gold);
+  letter-spacing: .1em; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.page-eyebrow::before, .page-eyebrow::after {
+  content: ''; width: 32px; height: 1px; background: var(--gold); opacity: .5;
+}
+.page-header h1 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 700; color: #fff; line-height: 1.2; margin-bottom: 12px;
+}
+.page-header h1 em { font-style: italic; color: var(--gold); }
+.page-header p {
+  font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 520px; margin: 0 auto;
+}
+
+/* ── ENGINE PANEL ── */
+.engine-panel {
+  background: var(--navy-panel);
+  border: 1px solid var(--divider);
+  border-top: 4px solid var(--gold);
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+
+.engine-head {
+  background: var(--navy-deep);
+  padding: 22px 30px 18px;
+  border-bottom: 1px solid var(--divider);
+}
+.engine-eyebrow {
+  font-size: 10px; font-weight: 600; color: var(--gold);
+  letter-spacing: .1em; margin-bottom: 5px;
+}
+.engine-title {
+  font-family: var(--serif); font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 3px;
+}
+.engine-sub { font-size: 13px; color: var(--muted); }
+
+/* ── INPUT FORM ── */
+.engine-body { padding: 26px 30px; }
+
+.ee-field { margin-bottom: 20px; }
+.ee-label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--muted); margin-bottom: 8px; letter-spacing: .03em;
+}
+.ee-input-row { display: flex; align-items: center; gap: 8px; }
+.ee-prefix { font-size: 15px; color: var(--muted); flex-shrink: 0; }
+.ee-input {
+  flex: 1; background: var(--navy); border: 1px solid var(--divider);
+  border-radius: 6px; padding: 12px 16px; color: var(--cream);
+  font-family: var(--sans); font-size: 15px; outline: none;
+  transition: border-color .2s; width: 100%;
+}
+.ee-input:focus { border-color: var(--gold); }
+.ee-input::placeholder { color: var(--muted); }
+select.ee-input { cursor: pointer; }
+
+.ee-slider-row { display: flex; align-items: center; gap: 12px; }
+.ee-slider {
+  flex: 1; -webkit-appearance: none; height: 5px;
+  background: var(--divider); border-radius: 3px; outline: none; cursor: pointer;
+}
+.ee-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--gold); cursor: pointer; border: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+.ee-slider-val {
+  font-size: 16px; font-weight: 700; color: var(--gold); min-width: 36px; text-align: right;
+}
+.ee-err { font-size: 12px; color: #E24B4A; margin-top: 6px; display: none; }
+
+.ee-run-btn {
+  width: 100%; background: var(--gold); color: #0A1628;
+  border: none; padding: 16px; border-radius: 6px;
+  font-family: var(--sans); font-size: 16px; font-weight: 700;
+  cursor: pointer; letter-spacing: .01em; transition: background .2s, transform .15s;
+  margin-top: 6px;
+}
+.ee-run-btn:hover { background: #E8B520; transform: translateY(-1px); }
+
+/* ── RESULTS ── */
+.ee-results { display: none; border-top: 1px solid var(--divider); padding: 26px 30px; }
+.ee-results.show { display: block; animation: fadeUp .35s ease both; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+.ee-results-head {
+  font-family: var(--serif); font-size: 18px; font-weight: 700;
+  color: #fff; margin-bottom: 18px;
+}
+
+/* Monster cards */
+.monster-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.m-card { border-radius: 8px; padding: 14px 16px; }
+.m-card.red   { background: rgba(224,75,74,0.12); border: 1px solid rgba(224,75,74,0.3); }
+.m-card.amber { background: rgba(186,117,23,0.12); border: 1px solid rgba(186,117,23,0.3); }
+.m-card.blue  { background: rgba(55,138,221,0.12); border: 1px solid rgba(55,138,221,0.3); }
+.m-card.pink  { background: rgba(212,83,126,0.12); border: 1px solid rgba(212,83,126,0.3); }
+.m-label { font-size: 10px; font-weight: 700; letter-spacing: .06em; margin-bottom: 5px; }
+.m-card.red   .m-label { color: #E24B4A; }
+.m-card.amber .m-label { color: #BA7517; }
+.m-card.blue  .m-label { color: #378ADD; }
+.m-card.pink  .m-label { color: #D4537E; }
+.m-num {
+  font-family: var(--serif); font-size: 20px; font-weight: 700;
+  color: #fff; line-height: 1.2;
+}
+.m-sub { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+
+/* Total box */
+.ee-total-box {
+  background: linear-gradient(135deg, #1A3A6A, #0E2040);
+  border: 1px solid var(--gold-border);
+  border-radius: 8px; padding: 20px 22px; text-align: center; margin-bottom: 16px;
+}
+.ee-total-label {
+  font-size: 11px; color: rgba(212,160,23,0.75); margin-bottom: 6px; letter-spacing: .05em;
+}
+.ee-total-num {
+  font-family: var(--serif); font-size: 36px; font-weight: 700;
+  color: var(--gold); line-height: 1; margin-bottom: 4px;
+}
+.ee-total-sub { font-size: 12px; color: var(--muted); }
+
+/* Rescue box */
+.ee-rescue-box {
+  background: rgba(99,153,34,0.1); border: 1px solid rgba(99,153,34,0.3);
+  border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;
+}
+.ee-rescue-title {
+  font-size: 11px; font-weight: 700; color: #7EC63A;
+  letter-spacing: .06em; margin-bottom: 12px;
+}
+.ee-rescue-row {
+  display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;
+}
+.ee-rescue-label { font-size: 13px; color: var(--muted); }
+.ee-rescue-val { font-size: 15px; font-weight: 600; color: #7EC63A; }
+.ee-rescue-divider { border: none; border-top: 1px solid rgba(99,153,34,0.25); margin: 10px 0; }
+.ee-rescue-total-label { font-size: 14px; font-weight: 600; color: #fff; }
+.ee-rescue-total-val { font-size: 20px; font-weight: 700; color: #7EC63A; }
+
+/* Timeline */
+.ee-timeline-label {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  letter-spacing: .08em; margin-bottom: 10px; margin-top: 4px;
+}
+.ee-timeline-row {
+  display: grid; grid-template-columns: 56px 1fr; gap: 8px;
+  margin-bottom: 7px; align-items: center;
+}
+.ee-tl-year { font-size: 11px; color: var(--muted); text-align: right; }
+.ee-tl-bars { display: flex; flex-direction: column; gap: 3px; }
+.ee-tl-bar-wrap {
+  background: rgba(255,255,255,0.06); border-radius: 3px; height: 15px; overflow: hidden;
+}
+.ee-tl-bar {
+  height: 100%; border-radius: 3px; display: flex; align-items: center;
+  padding-left: 6px; transition: width 0.6s ease;
+}
+.ee-tl-bar span { font-size: 10px; font-weight: 600; color: #fff; white-space: nowrap; }
+.ee-legend { display: flex; gap: 16px; margin-top: 10px; margin-bottom: 16px; }
+.ee-tl-dot {
+  width: 9px; height: 9px; border-radius: 2px;
+  display: inline-block; margin-right: 5px; vertical-align: middle;
+}
+.ee-legend-label { font-size: 11px; color: var(--muted); }
+
+/* CTA strip */
+.ee-cta-strip {
+  background: var(--gold-glow); border: 1px solid var(--gold-border);
+  border-radius: 8px; padding: 16px 20px; margin-bottom: 16px;
+  display: flex; gap: 14px; align-items: center;
+}
+.ee-cta-icon { font-size: 26px; flex-shrink: 0; }
+.ee-cta-text { font-size: 13px; color: var(--cream); line-height: 1.55; }
+.ee-cta-text strong { color: var(--gold); }
+
+.ee-cta-btn {
+  width: 100%; background: var(--gold); color: #0A1628;
+  border: none; padding: 16px; border-radius: 6px;
+  font-family: var(--sans); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: background .2s; margin-bottom: 12px;
+  letter-spacing: .01em;
+}
+.ee-cta-btn:hover { background: #E8B520; }
+
+.ee-disclaimer {
+  font-size: 11px; color: var(--muted); line-height: 1.6; text-align: center;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  body { padding: 24px 14px 40px; }
+  .engine-body, .ee-results { padding: 20px 20px; }
+  .engine-head { padding: 18px 20px 14px; }
+  .monster-strip { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-eyebrow">Module 1 · Atlanta First Guaranty</div>
+    <h1>The Empire Engine<br><em>Find Your Number First</em></h1>
+    <p>Before anything else — find your number. Enter your details below. The Empire Engine calculates your projected RMD tax exposure, your IRMAA risk, and the size of the freight tax train heading your way.</p>
+  </div>
+
+  <!-- Calculator panel -->
+  <div class="engine-panel" id="engine">
+
+    <div class="engine-head">
+      <div class="engine-eyebrow">The Empire Engine · 401(k) Rescue Strategy</div>
+      <div class="engine-title">Put Your Numbers In</div>
+      <div class="engine-sub">See exactly where you'll be — next year, next decade, next life.</div>
+    </div>
+
+    <!-- INPUT FORM -->
+    <div class="engine-body">
+
+      <div class="ee-field">
+        <label class="ee-label" for="balance">Current 401(k) / IRA balance</label>
+        <div class="ee-input-row">
+          <span class="ee-prefix">$</span>
+          <input class="ee-input" type="number" id="balance" placeholder="e.g. 750,000" min="0" step="10000">
+        </div>
+        <div class="ee-err" id="err-balance">Please enter your balance to run your numbers.</div>
+      </div>
+
+      <div class="ee-field">
+        <label class="ee-label" for="age">Your current age</label>
+        <div class="ee-slider-row">
+          <input class="ee-slider" type="range" id="age" min="45" max="80" value="62" step="1">
+          <span class="ee-slider-val" id="age-out">62</span>
+        </div>
+      </div>
+
+      <div class="ee-field">
+        <label class="ee-label" for="income">Other annual retirement income (Social Security, pension, etc.)</label>
+        <div class="ee-input-row">
+          <span class="ee-prefix">$</span>
+          <input class="ee-input" type="number" id="income" placeholder="e.g. 48,000 — leave blank if none" min="0" step="1000">
+        </div>
+      </div>
+
+      <div class="ee-field">
+        <label class="ee-label" for="filing">Filing status</label>
+        <select class="ee-input" id="filing">
+          <option value="married" selected>Married filing jointly</option>
+          <option value="single">Single</option>
+        </select>
+      </div>
+
+      <button class="ee-run-btn" onclick="runEngine()">Run My Numbers →</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="ee-results" id="ee-results">
+
+      <div class="ee-results-head" id="ee-headline">Your four monsters</div>
+
+      <!-- Four monster cards -->
+      <div class="monster-strip">
+        <div class="m-card red">
+          <div class="m-label">RMD FREIGHT TRAIN</div>
+          <div class="m-num" id="r-rmd">—</div>
+          <div class="m-sub">Est. first-year forced withdrawal at age 73</div>
+        </div>
+        <div class="m-card amber">
+          <div class="m-label">IRMAA SURCHARGE</div>
+          <div class="m-num" id="r-irmaa">—</div>
+          <div class="m-sub" id="r-irmaa-sub">Extra Medicare cost per year</div>
+        </div>
+        <div class="m-card blue">
+          <div class="m-label">MARKET VOLATILITY</div>
+          <div class="m-num" id="r-vol">—</div>
+          <div class="m-sub">Potential loss in a 30% drop — your tax bill barely moves</div>
+        </div>
+        <div class="m-card pink">
+          <div class="m-label">STACKING EFFECT</div>
+          <div class="m-num" id="r-stack">—</div>
+          <div class="m-sub">Lifetime tax burden if nothing changes</div>
+        </div>
+      </div>
+
+      <!-- Total exposure box -->
+      <div class="ee-total-box">
+        <div class="ee-total-label">TOTAL ESTIMATED LIFETIME TAX EXPOSURE</div>
+        <div class="ee-total-num" id="r-total">—</div>
+        <div class="ee-total-sub">Without a rescue strategy in place</div>
+      </div>
+
+      <!-- Rescue savings box -->
+      <div class="ee-rescue-box">
+        <div class="ee-rescue-title">THE RESCUE — WHAT YOU COULD KEEP</div>
+        <div class="ee-rescue-row">
+          <span class="ee-rescue-label">Roth conversion savings</span>
+          <span class="ee-rescue-val" id="r-roth">—</span>
+        </div>
+        <div class="ee-rescue-row">
+          <span class="ee-rescue-label">IRMAA avoidance (lifetime)</span>
+          <span class="ee-rescue-val" id="r-irmaa-save">—</span>
+        </div>
+        <div class="ee-rescue-row">
+          <span class="ee-rescue-label">Additional tax-free strategies</span>
+          <span class="ee-rescue-val" id="r-flex">—</span>
+        </div>
+        <hr class="ee-rescue-divider">
+        <div class="ee-rescue-row">
+          <span class="ee-rescue-total-label">Estimated total rescue</span>
+          <span class="ee-rescue-total-val" id="r-rescue-total">—</span>
+        </div>
+      </div>
+
+      <!-- Timeline chart -->
+      <div class="ee-timeline-label">YOUR TAX EXPOSURE · NEXT 20 YEARS</div>
+      <div id="timeline"></div>
+      <div class="ee-legend">
+        <div><span class="ee-tl-dot" style="background:#C0392B"></span><span class="ee-legend-label">Without rescue</span></div>
+        <div><span class="ee-tl-dot" style="background:#2E7D32"></span><span class="ee-legend-label">With rescue strategy</span></div>
+      </div>
+
+      <!-- CTA strip -->
+      <div class="ee-cta-strip">
+        <div class="ee-cta-icon">📖</div>
+        <div class="ee-cta-text">
+          <strong>Your next step:</strong> The modules ahead will show you exactly how to reduce each of these four numbers. Start with Module 1.2 — The RMD Freight Train — where we build your personal rescue roadmap.
+        </div>
+      </div>
+
+      <p class="ee-disclaimer">Educational estimates only — not tax, legal, or investment advice. Projections use IRS Uniform Lifetime Table (Publication 590-B), 6.5% annual growth assumption, and 2025 IRMAA income thresholds — for illustrative purposes only. Numbers shown are estimates and not guaranteed outcomes. Consult a qualified tax professional before acting on any strategy shown here. Steve Lifgren to verify IRMAA bracket values before final deployment.</p>
+    </div>
+
+  </div><!-- /engine-panel -->
+
+</div><!-- /page-wrap -->
+
+<script>
+/* ── EMPIRE ENGINE FORMULAS ── */
+/* Sources: IRS Uniform Lifetime Table (Pub 590-B), SECURE 2.0 Act (RMD age 73),
+   2025 IRMAA brackets (Medicare Part B/D), 6.5% conservative growth assumption */
+
+const fmt = n => '$' + Math.round(n).toLocaleString();
+
+document.getElementById('age').addEventListener('input', function() {
+  document.getElementById('age-out').textContent = this.value;
+});
+
+function runEngine() {
+  const balanceEl = document.getElementById('balance');
+  const errEl     = document.getElementById('err-balance');
+  const balance   = parseFloat(balanceEl.value);
+
+  if (!balance || balance <= 0) {
+    errEl.style.display = 'block';
+    balanceEl.focus();
+    return;
+  }
+  errEl.style.display = 'none';
+
+  const age     = parseInt(document.getElementById('age').value);
+  const income  = parseFloat(document.getElementById('income').value) || 0;
+  const married = document.getElementById('filing').value === 'married';
+
+  /* ── RMD: IRS Uniform Lifetime Table, SECURE 2.0 RMD age = 73 ── */
+  const rmdAge     = 73;
+  const yearsToRMD = Math.max(0, rmdAge - age);
+  const growthRate = 0.065;                         // 6.5% conservative annual growth
+  const balAtRMD   = balance * Math.pow(1 + growthRate, yearsToRMD);
+  const rmdDivisor = 26.5;                          // IRS ULT divisor at age 73
+  const firstRMD   = balAtRMD / rmdDivisor;
+
+  /* ── IRMAA: 2025 Medicare Part B+D surcharge brackets ── */
+  /* MFJ base threshold: $212,000 | Single base threshold: $106,000 */
+  /* Note: Steve Lifgren to verify 2025/2026 bracket values before live deployment */
+  const totalIncome = income + firstRMD;
+  const base        = married ? 212000 : 106000;
+  let irmaaSurcharge = 0;
+  if      (totalIncome > base + 140000) irmaaSurcharge = married ? 9440 : 4720;
+  else if (totalIncome > base +  80000) irmaaSurcharge = married ? 7140 : 3570;
+  else if (totalIncome > base +  40000) irmaaSurcharge = married ? 4760 : 2380;
+  else if (totalIncome > base)          irmaaSurcharge = married ? 2380 : 1190;
+
+  /* ── Market volatility exposure: 30% drawdown scenario ── */
+  const volExposure = balance * 0.30;
+
+  /* ── Lifetime stacking effect ── */
+  const lifeExp      = 87;
+  const yrsRetired   = Math.max(5, lifeExp - Math.max(age, 65));
+  const avgTaxRate   = 0.24;                        // 24% federal bracket assumption
+  const lifetimeTax  = firstRMD * yrsRetired * avgTaxRate * 1.15; // 1.15 = SS taxability uplift
+  const lifetimeIRMAA = irmaaSurcharge * Math.min(yrsRetired, 15) * 0.5;
+  const total        = lifetimeTax + lifetimeIRMAA;
+
+  /* ── Rescue estimates ── */
+  const convYears   = Math.min(8, Math.max(2, rmdAge - age));
+  const rothSavings = balance * 0.18 * (convYears / 8); // Roth conversion window efficiency
+  const irmaaSave   = irmaaSurcharge * Math.min(yrsRetired, 15);
+  const flexSave    = balance * 0.08;               // Additional tax-free strategy estimate
+  const rescueTotal = rothSavings + irmaaSave + flexSave;
+
+  /* ── Populate results ── */
+  document.getElementById('r-rmd').textContent         = fmt(firstRMD);
+  document.getElementById('r-irmaa').textContent       = irmaaSurcharge > 0 ? fmt(irmaaSurcharge) + '/yr' : 'Below threshold';
+  document.getElementById('r-irmaa-sub').textContent   = irmaaSurcharge > 0 ? 'You cross the IRMAA line when RMDs begin' : 'Monitor closely as RMDs approach';
+  document.getElementById('r-vol').textContent         = fmt(volExposure);
+  document.getElementById('r-stack').textContent       = fmt(lifetimeTax);
+  document.getElementById('r-total').textContent       = fmt(total);
+  document.getElementById('r-roth').textContent        = fmt(rothSavings);
+  document.getElementById('r-irmaa-save').textContent  = fmt(irmaaSave);
+  document.getElementById('r-flex').textContent        = fmt(flexSave);
+  document.getElementById('r-rescue-total').textContent = fmt(rescueTotal);
+  document.getElementById('ee-headline').textContent   =
+    'Your four monsters — ' + (married ? 'married filing jointly' : 'single') + ', age ' + age;
+
+  /* ── Timeline chart ── */
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '';
+  const startAge   = Math.max(age, 62);
+  const checkpoints = [0, 5, 10, 15, 20];
+  const maxBar     = total * 0.13;
+
+  checkpoints.forEach(yr => {
+    const displayAge = startAge + yr;
+    const factor     = yr < yearsToRMD ? 0.25 : 1.0 + (yr - yearsToRMD) * 0.07;
+    const woVal      = Math.min(firstRMD * factor * avgTaxRate, maxBar);
+    const wiVal      = woVal * (1 - Math.min(0.58, rescueTotal / total));
+    const pctWo      = Math.round((woVal / maxBar) * 100);
+    const pctWi      = Math.round((wiVal / maxBar) * 100);
+
+    const row = document.createElement('div');
+    row.className = 'ee-timeline-row';
+    row.innerHTML =
+      '<div class="ee-tl-year">Age ' + displayAge + '</div>' +
+      '<div class="ee-tl-bars">' +
+        '<div class="ee-tl-bar-wrap"><div class="ee-tl-bar" style="width:' + pctWo + '%;background:#C0392B"><span>' + fmt(woVal) + '</span></div></div>' +
+        '<div class="ee-tl-bar-wrap"><div class="ee-tl-bar" style="width:' + pctWi + '%;background:#2E7D32"><span>' + fmt(wiVal) + '</span></div></div>' +
+      '</div>';
+    tl.appendChild(row);
+  });
+
+  /* Show results */
+  const res = document.getElementById('ee-results');
+  res.classList.add('show');
+  setTimeout(() => res.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+</script>
+
+</body>
+</html>
